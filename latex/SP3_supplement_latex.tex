@@ -1,0 +1,230 @@
+%%%%%%%%%%%%%%%%% PREAMBLE %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass{article}
+\usepackage[MnSymbol]{mathspec}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+%\setmainfont[Ligatures=TeX]{Minion Pro}
+\renewcommand{\normalsize}{\fontsize{12pt}{16pt}\selectfont}%
+%\setmonofont[Scale=MatchLowercase]{Monaco}
+
+\usepackage{graphicx}
+%\graphicspath{ {../4paper/}}
+
+\usepackage[a4paper, bottom=0.4in, top=0.6in, verbose]{geometry}
+\geometry{marginparsep=0pt, marginparwidth=0pt, hoffset=-17mm, textwidth=172mm, outer=0mm,footskip=0.0pt}
+\usepackage{layout}
+%Changes the page numbers - {arabic}=arabic numerals, {gobble}=no page numbers, {roman}=Roman numerals
+\pagenumbering{gobble}
+\usepackage{enumitem}% an important package for customising appearance of list envs
+\usepackage{longtable}
+\usepackage{xcolor}
+\usepackage[backend=biber,style=numeric,sorting=none,giveninits=true]{biblatex}
+\addbibresource{References.bib}
+
+% from https://tex.stackexchange.com/a/261480
+% fix horizontal spacing
+\makeatletter
+\renewcommand*{\@textcolor}[3]{%
+  \protect\leavevmode
+  \begingroup
+    \color#1{#2}#3%
+  \endgroup
+}
+
+\title{Supplementary methods}
+\date{\vspace{-10ex}}
+%%%%%%%%%%%%%%%%% END OF PREAMBLE %%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+\maketitle
+
+\hypertarget{introduction}{%
+\subsubsection*{Introduction}\label{introduction}}
+
+Our aim was to infer the proportion of the population having any
+antibody against SARS-CoV-2, as well as the proportion of those who
+acquired antibodies through natural infection as opposed to vaccination.
+We do so by modelling jointly the antibody response measured by the
+Roche-N and S immunoassays together with participant responses to a
+vaccination questionnaire. We disentangle natural infections from
+vaccination antibody responses using the fact that available vaccines in
+Switzerland (Moderna and Pfizer) both elicit a response exclusively to
+the S protein of SARS-CoV-2, as opposed to natural infections which
+typically elicit a response to both the N and S virus proteins. We
+expand previous Bayesian modelling frameworks used for seroprevalence
+estimates that account for demographic parameters (sex and age), test
+performance and household infection clustering \cite{stringhini2020lancet,stringhini2021_sp2}. The
+main changes are that we model jointly the response to both tests, and
+that we account for vaccination-induced antibody response.
+
+\hypertarget{multinomial-response-model}{%
+\subsubsection*{Multinomial response
+model}\label{multinomial-response-model}}
+
+We model the Roche-S and Roche-N test results for participant $i$,
+$\boldsymbol{x}_i$, consisting of one of four possible outcome
+combinations $[n_{S^+N^+}, n_{S^-N^+}, n_{S^+N^-}, n_{S^-N^-}]$ (${}^+$ indicates antibody presence, ${}^-$ indicates absence) with
+$\boldsymbol{x}_i \in \{[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]\}$
+using a multinomial distribution parameterised by parameter vector
+$\boldsymbol{\pi}_i = [\pi_i^{++}, \pi_i^{-+}, \pi_i^{+-}, \pi_i^{--}]$,
+where $\pi^{lm}$ is the probability of having Roche-S test result
+$l$ and Roche-N result $m$, accounting both for the underlying
+probability of each antibody status $p^{\pm/\pm}$, and test
+sensitivity, $\theta^+$ and specificity, $\theta^-$:
+
+\[
+\begin{aligned}
+\boldsymbol{x_i} & \sim \text{Multinomial}(\boldsymbol{\pi}_i), \\
+\pi_i^{++} &= \theta^+_S \theta^+_N p_i^{++} + (1-\theta^-_S) \theta^+_N p_i^{-+} + \theta^+_S (1-\theta^-_N) p_i^{+-} + (1-\theta^-_S) (1-\theta^-_N) p_i^{--}, \\
+\pi_i^{-+} &= (1-\theta^+_S) \theta^+_N p_i^{++} + \theta^-_S \theta^+_N p_i^{-+} + (1-\theta^+_S) (1-\theta^-_N) p_i^{+-} + \theta^-_S (1-\theta^-_N) p_i^{--}, \\
+\pi_i^{+-} &= \theta^+_S (1-\theta^+_N) p_i^{++} + (1-\theta^-_S) (1-\theta^+_N) p_i^{-+} + \theta^+_S \theta^-_N p_i^{+-} + (1-\theta^-_S) \theta^-_N p_i^{--}, \\
+\pi_i^{--} &= (1-\theta^+_S) (1-\theta^+_N) p_i^{++} + \theta^-_S (1-\theta^+_N) p_i^{-+} + (1-\theta^+_S) \theta^-_N p_i^{+-} + \theta^-_S \theta^-_N p_i^{--}.
+\end{aligned}
+\]
+
+The underlying probability of antibody status accounts both for the
+probability of natural infection $\lambda_i$ and vaccinations status,
+$v_i \in \{0, 1\}$. Following \cite{stringhini2020lancet,stringhini2021_sp2} we model the
+probability of natural infection as a function of sex and age category,
+and accounting for household infection clustering through a random
+effect, $\alpha_h$:
+
+\[
+\begin{aligned}
+\text{logit}(\lambda_i) &= \alpha_h + \mathbf{X}_i \boldsymbol{\beta} \\
+\alpha_h &\sim \text{Normal}(0, \sigma_h^2),
+\end{aligned}
+\]
+
+where $\mathbf{X}_i$ is the matrix of covariates, and
+$\boldsymbol{\beta}$ the vector of regression coefficients. The
+probabilities of antibody status are then given by: \[
+\begin{aligned}
+p_i^{++} &= \gamma^{++}\lambda_i + \gamma^{-+}\nu_i \\
+p_i^{-+} &= \gamma^{-+}\lambda_i(1-\nu_i) \\
+p_i^{+-} &= (1-\lambda_i)\nu_i + \gamma^{+-}\lambda_i\\
+p_i^{--} &= 1 - \nu_i (1-\lambda_i) - \lambda_i,
+\end{aligned}
+\] where $\gamma^{++}, \gamma^{-+}, \gamma^{+-}$ are the conditional
+probability of having $S^+N^+, S^-N^+, S^+N^-$ responses respectively upon
+natural infection, $\nu_i$ is the probability of having a
+vaccine-induced $S^+$ response as a function of the conditional probability
+of antibody response upon infection $\eta_i$,
+$\nu_i = \eta_i \times v_i$.
+
+\hypertarget{vaccination}{%
+\subsubsection*{Vaccination}\label{vaccination}}
+
+To obtain population-level seroprevalence estimates we also model the
+proportion of vaccinated individuals in each sex/age class following the
+approach used for natural infection:
+
+\[
+\begin{aligned}
+  v_{i} &\sim \text{Bernoulli}(\phi_i) \\
+  \text{logit}(\phi_i) &= \alpha_{v,h} + \mathbf{X}_i \boldsymbol{\beta_v} \\
+  \alpha_{v,h} &\sim \text{Normal}(0, \sigma_v^2).
+\end{aligned}
+\] Given vaccination policy recommendations in the canton of Geneva,
+previously infected individuals were discouraged to be vaccinated in the
+early phase of the campaign, thus making the probability of vaccination
+dependent on the infection status of the individual. We account for this
+dependence by modelling separately the probability of vaccination given
+the infection status and marginalising out the infection status:
+
+\[
+\begin{aligned}
+  P(v_{i}|\mathbf{\Theta})  &= \text{Bernoulli}(v_i|\phi_i^I)\lambda_i + \text{Bernoulli}(v_i|\phi_i^{\sim I})(1-\lambda_i),\\
+  \text{logit}(\phi_i^{\sim I}) &= \alpha_{v,h} + \mathbf{X}_i \boldsymbol{\beta_v}, \\
+  \text{logit}(\phi_i^I) &= \alpha_{v,h} + \mathbf{X}_i \boldsymbol{\beta_v} + \mathbf{X}_i \boldsymbol{\beta_v^I}, \\
+  \alpha_{v,h} &\sim \text{Normal}(0, \sigma_v^2),
+\end{aligned}
+\] where $\boldsymbol{\Theta}$ is the vector of all model parameters,
+$I, {\sim} I$ indicates infection and non-infection respectively, and
+$\boldsymbol{\beta_v^I}$ is the vector of regression coefficients
+giving the difference in probability of vaccination between infected and
+non-infected individuals.
+
+When estimating the population-level seroprevalence we account for the conditional probability of vaccination given non-infection, $p_{v|\sim I}$, in the probability of a negative S and N response accounting for household vaccination clustering, $p^{--}$, as:
+
+$$
+p_{s,k}^{--} = 1 - p_{v|\sim I, s, k} \times \left(1- p_{I, s,k}\right) - p_{I, s,k},
+$$
+
+where $s, k$ denote the sex and age categories, $p_{v|\sim I, s, k}= \int_0^1 \phi_{s,k}^{\sim I}(t) dt = \int_0^1 \boldsymbol{\beta}_{v, s, k}\boldsymbol{X}_{s, k} + \sigma_{v} \Phi^{-1}(t) dt$, with $\Phi^{-1}(t)$ being the normal quantile function, and similarly $p_{I,s,k}$ is the probability of infection with $p_{I,s,k} = \int_0^1\lambda_{s, k}(t)dt = \int_0^1\boldsymbol{\beta}_{s, k} \boldsymbol{X}_{s, k}+ \sigma \Phi^{-1}(t)dt$.
+
+\hypertarget{diagnostic-test-performance}{%
+\subsubsection*{Diagnostic test
+performance}\label{diagnostic-test-performance}}
+
+The individual performance of both N and S tests is incorporated
+hierarchically following Gelman \& Carpenter \cite{gelman2020}.
+The sensitivity, $\theta^+$, is determined using $n^+$ RT-PCR
+positive controls from a lab validation study \cite{muench2020}, of which
+$x^+$ tested positive. The specificity, $\theta^-$, is determined
+using $n^-$ pre-pandemic negative controls, of which $x^-$ tested
+positive. For the Roche N test, these values are modulated by data in \cite{ainsworth2020performance}.
+For the Roche S test, the lab study data are modulated by those
+available on the
+\href{https://diagnostics.roche.com/global/en/products/params/elecsys-anti-sars-cov-2-s.html}{Roche website (last accessed 2021-07-19)}.
+
+\hypertarget{priors}{%
+\subsubsection*{Priors}\label{priors}}
+
+We follow a similar setting of the priors on the tests' sensitivity and
+specificity as Gelman \& Carpenter \cite{gelman2020}.
+For study $j$, the specificity $\theta^-_j$ and sensitivity
+$\theta^+_j$ are drawn from normal distributions on the log odds
+scale, \[
+\begin{aligned}
+\text{logit}(\theta^-_j) &\sim \text{Normal}(\mu_{\theta^-}, \sigma_{\theta^-}),\\
+\text{logit}(\theta^+_j) &\sim \text{Normal}(\mu_{\theta^+}, \sigma_{\theta^+}).
+\end{aligned}
+\] Hyperparameters $\mu_z$ and $\sigma_z$ for
+$z \in (\theta^-, \theta^+)$ follow, on the logit scale, normal
+distributions $\mu_z \sim \mathcal N(4,2)$ and positive half-normals
+$\sigma_z \sim \mathcal N^+(0,1)$ respectively. These priors on test
+performance were identical for both the Roche S and Roche N tests.
+
+We used standard normal $\mathcal N(0,1)$ priors for the logistic
+regression coefficients for infection $\boldsymbol{\beta}$. For
+coefficients of vaccination $\boldsymbol{\beta_v}$ and for
+coefficients of the difference in probability of vaccination between
+infected and non-infected individuals $\boldsymbol{\beta_v^I}$ we also
+used standard normals except for the youngest age groups i.e.~0--5 year
+olds and $6-11$ year olds. For these two age groups,
+$\beta_v \sim \mathcal N(-10,0.01)$ to reflect the fact that there was
+almost no vaccination in these youngest age groups in Geneva at the time
+of the study (NB vaccination registration for those aged $12-15$
+opened on 16th June 2021
+(\href{https://www.ge.ch/en/getting-vaccinated-against-covid-19/covid-19-vaccination-campaign-geneva}{https://www.ge.ch/en/getting-vaccinated-against-covid-19/covid-19-vaccination-campaign-geneva
+last accessed 2021-07-20}).
+Correspondingly, $\beta_v^I \sim \mathcal N(0,0.01)$ for these two age groups.
+
+The priors for the means of the household random effects $\alpha_h$
+and $\alpha_{h,v}$, followed standard normals, and for standard
+deviations of the household random effects were positive half-normals,
+$\sigma_h \sim \mathcal N^+(0, 2)$ and
+$\sigma_v \sim \mathcal N^+(0, 2)$.
+We use a Dirichlet prior on the conditional
+probability of having $S^+N^+$, $S^-N^+$, $S^+N^-$ responses upon natural infection,
+$\gamma^{++}, \gamma^{-+}, \gamma^{+-}$,
+$\boldsymbol{\gamma} \sim \text{Dir}(10,1,1)$, to highly favour
+production of both S and N antibodies upon infection. Finally, we put a
+strong prior on the conditional probability of antibody response after
+vaccination $\eta_i \sim \text{Beta}(10, 0.1)$.
+
+\hypertarget{implementation}{%
+\subsubsection*{Implementation}\label{implementation}}
+
+The model was coded in the probabilistic programming language Stan \cite{stan} using the Rstan package \cite{rstan} as the interface.
+R \cite{Rcore} version 4.1 was used for data analysis.
+4 chains were run with 1500 iterations each, 250 of which were warmup, to give a total of 5000 posterior samples.
+Convergence was assessed by checking that $\widehat{R} \approx 1$, that the effective sample size was reasonable for all parameters, and visually using shinystan \cite{shinystan} diagnostics checks.
+
+\hypertarget{refs}{%
+\subsubsection*{References}\label{refs}}
+
+\printbibliography[heading=none]
+
+\end{document}
