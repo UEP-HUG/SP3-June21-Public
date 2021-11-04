@@ -1,0 +1,27 @@
+# From T_15_03_1_02 Population résidante selon le sexe, le groupe d'âges et le plus haut niveau de formation achev de 2015 a 2019 updated 10.05.2021
+# Tidied by Nick Pullen 2021-07-14
+Sex,age_cat,education_level,population
+Female,"[15,25)",Mandatory,11013
+Female,"[25,45)",Mandatory,11757
+Female,"[45,65)",Mandatory,17902
+Female,"[65,105]",Mandatory,16837
+Female,"[15,25)",Secondary,12070
+Female,"[25,45)",Secondary,17267
+Female,"[45,65)",Secondary,20579
+Female,"[65,105]",Secondary,15722
+Female,"[15,25)",Tertiary,3565
+Female,"[25,45)",Tertiary,38650
+Female,"[45,65)",Tertiary,24184
+Female,"[65,105]",Tertiary,10718
+Male,"[15,25)",Mandatory,12963
+Male,"[25,45)",Mandatory,12189
+Male,"[45,65)",Mandatory,15301
+Male,"[65,105]",Mandatory,7477
+Male,"[15,25)",Secondary,11305
+Male,"[25,45)",Secondary,18801
+Male,"[45,65)",Secondary,18141
+Male,"[65,105]",Secondary,11253
+Male,"[15,25)",Tertiary,2666
+Male,"[25,45)",Tertiary,34303
+Male,"[45,65)",Tertiary,25925
+Male,"[65,105]",Tertiary,13323
